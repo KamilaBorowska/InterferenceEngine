@@ -16,16 +16,17 @@
  */
 package com.github.xfix.interferenceengine.solver;
 
-import com.github.xfix.interferenceengine.RuleTable;
+import com.github.xfix.interferenceengine.expression.Variable;
+import java.util.List;
 
 /**
  *
  * @author Konrad Borowski
  */
-public class ForwardChaining implements Solver {
+public class ForwardsChaining implements Solver {
 
     @Override
-    public void solve() {
+    public void solve(List<Variable> rules) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     

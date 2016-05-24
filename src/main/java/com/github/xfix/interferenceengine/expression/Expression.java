@@ -30,7 +30,6 @@ public class Expression {
 
     private Expression(List<Action> actions) {
         this.actions = actions;
-        System.out.println(actions);
     }
 
     public static Expression fromCode(String code) {

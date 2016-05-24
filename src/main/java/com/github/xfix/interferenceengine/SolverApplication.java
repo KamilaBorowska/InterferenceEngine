@@ -20,6 +20,8 @@ import com.github.xfix.interferenceengine.expression.Variable;
 import com.github.xfix.interferenceengine.graph.GraphDisplay;
 import com.github.xfix.interferenceengine.parser.FileParser;
 import com.github.xfix.interferenceengine.parser.SyntaxError;
+import com.github.xfix.interferenceengine.solver.BackwardsChaining;
+import com.github.xfix.interferenceengine.solver.ForwardsChaining;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
@@ -35,7 +37,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import com.github.xfix.interferenceengine.solver.BackwardsChaining;
+import com.github.xfix.interferenceengine.solver.Solver;
 import java.util.ArrayList;
 
 /**
@@ -92,9 +94,9 @@ public class SolverApplication extends Application {
         return RuleParser.parseRules(table.getRules());
     }
 
-    private void solve() {
+    private void solve(Solver solver) {
         ArrayList<Variable> rules = getRules();
-        new BackwardsChaining(rules).solve();
+        solver.solve(rules);
         StringBuilder output = new StringBuilder();
         for (Variable variable : rules) {
             output
@@ -116,6 +118,15 @@ public class SolverApplication extends Application {
      */
     public static void main(String[] args) {
         launch(args);
+    }
+    
+    private EventHandler<ActionEvent> createEventForSolver(final Solver solver) {
+        return new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                solve(solver);
+            }
+        };
     }
 
     /**
@@ -149,16 +160,10 @@ public class SolverApplication extends Application {
                 tryDeletingRows();
             }
         });
-        EventHandler<ActionEvent> solveHandler = new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                solve();
-            }
-        };
-        Button solveButton = new Button("Wnioskowanie w przód");
-        solveButton.setOnAction(solveHandler);
         Button solveBackButton = new Button("Wnioskowanie w tył");
-        solveBackButton.setOnAction(solveHandler);
+        solveBackButton.setOnAction(createEventForSolver(new BackwardsChaining()));
+        Button solveForwardButton = new Button("Wnioskowanie w przód");
+        solveForwardButton.setOnAction(createEventForSolver(new ForwardsChaining()));
         Button graphButton = new Button("Wyświetl graf");
         graphButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -171,7 +176,7 @@ public class SolverApplication extends Application {
             }
         });
         buttons.getChildren().addAll(loadButton, addRowButton, deleteRowButton,
-                solveButton, solveBackButton, graphButton);
+                solveBackButton, solveForwardButton, graphButton);
 
         VBox.setVgrow(table.getTable(), Priority.ALWAYS);
         root.getChildren().addAll(buttons, table.getTable());

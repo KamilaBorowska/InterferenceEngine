@@ -16,12 +16,13 @@
  */
 package com.github.xfix.interferenceengine.solver;
 
-import com.github.xfix.interferenceengine.RuleTable;
+import com.github.xfix.interferenceengine.expression.Variable;
+import java.util.List;
 
 /**
  *
  * @author Konrad Borowski
  */
 public interface Solver {
-    public void solve();
+    public void solve(List<Variable> rules);
 }

@@ -18,7 +18,6 @@ package com.github.xfix.interferenceengine.solver;
 
 import java.util.List;
 import java.util.Optional;
-import com.github.xfix.interferenceengine.RuleTable;
 import com.github.xfix.interferenceengine.expression.Expression;
 import com.github.xfix.interferenceengine.expression.Variable;
 
@@ -29,14 +28,9 @@ import com.github.xfix.interferenceengine.expression.Variable;
 public class BackwardsChaining implements Solver {
 
     private boolean didSomething = true;
-    private final List<Variable> rules;
-
-    public BackwardsChaining(List<Variable> rules) {
-        this.rules = rules;
-    }
 
     @Override
-    public void solve() {
+    public void solve(List<Variable> rules) {
         while (didSomething) {
             didSomething = false;
             for (Variable rule : rules) {
