@@ -94,7 +94,7 @@ public class SolverApplication extends Application {
 
     private void solve() {
         ArrayList<Variable> rules = getRules();
-        new BackwardsChaining(rules, table).solve();
+        new BackwardsChaining(rules).solve();
         StringBuilder output = new StringBuilder();
         for (Variable variable : rules) {
             output

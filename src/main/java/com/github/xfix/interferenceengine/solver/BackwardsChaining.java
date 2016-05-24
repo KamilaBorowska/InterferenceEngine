@@ -30,11 +30,9 @@ public class BackwardsChaining implements Solver {
 
     private boolean didSomething = true;
     private final List<Variable> rules;
-    private final RuleTable table;
 
-    public BackwardsChaining(List<Variable> rules, RuleTable table) {
+    public BackwardsChaining(List<Variable> rules) {
         this.rules = rules;
-        this.table = table;
     }
 
     @Override
