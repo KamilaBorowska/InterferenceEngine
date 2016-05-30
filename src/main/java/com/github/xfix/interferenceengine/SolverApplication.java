@@ -16,6 +16,7 @@
  */
 package com.github.xfix.interferenceengine;
 
+import com.github.xfix.interferenceengine.expression.Expression;
 import com.github.xfix.interferenceengine.expression.Variable;
 import com.github.xfix.interferenceengine.graph.GraphDisplay;
 import com.github.xfix.interferenceengine.parser.FileParser;
@@ -39,6 +40,12 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import com.github.xfix.interferenceengine.solver.Solver;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Optional;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.Region;
 
 /**
  * JavaFX application that solves logical expressions
@@ -63,6 +70,13 @@ public class SolverApplication extends Application {
         Alert errorAlert = new Alert(AlertType.ERROR, message);
         errorAlert.setTitle("Błąd");
         errorAlert.setHeaderText("Błąd");
+        // Stupid hacks needed for this to work
+        ObservableList<Node> children = errorAlert.getDialogPane().getChildren();
+        for (Node node : children) {
+            if (node instanceof Label) {
+                ((Label) node).setMinHeight(Region.USE_PREF_SIZE);
+            }
+        }
         errorAlert.showAndWait();
     }
 
@@ -84,20 +98,28 @@ public class SolverApplication extends Application {
                 parser.parseLine(line, lineNumber);
             }
         } catch (FileNotFoundException ex) {
-            error(String.format("Plik %s nie istnieje.", file));
+            error(String.format("Plik %s nie istnieje", file));
         } catch (SyntaxError ex) {
             error(ex.toString());
         }
     }
 
-    private ArrayList<Variable> getRules() {
+    private ArrayList<Variable> getRules() throws UnrecognizedVariableError {
         ArrayList<Variable> rules = RuleParser.parseRules(table.getRules());
+        checkRuleValidity(rules);
         Variable.clearNamed();
         return rules;
     }
 
     private void solve(Solver solver) {
-        ArrayList<Variable> rules = getRules();
+        ArrayList<Variable> rules;
+        try {
+            rules = getRules();
+        }
+        catch (UnrecognizedVariableError e) {
+            error(e.toString());
+            return;
+        }
         solver.solve(rules);
         StringBuilder output = new StringBuilder();
         for (Variable variable : rules) {
@@ -172,8 +194,8 @@ public class SolverApplication extends Application {
             public void handle(ActionEvent e) {
                 try {
                     GraphDisplay.draw(getRules());
-                } catch (IllegalArgumentException ex) {
-                    error("Masz nie zdefiniowane wartości");
+                } catch (UnrecognizedVariableError ex) {
+                    error(ex.toString());
                 }
             }
         });
@@ -188,5 +210,40 @@ public class SolverApplication extends Application {
         primaryStage.setTitle("Silnik wnioskujący");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private static void checkRuleValidity(ArrayList<Variable> rules) throws UnrecognizedVariableError {
+        HashSet<Variable> knownVariables = new HashSet<>(rules);
+        for (Variable variable : rules) {
+            boolean[] states = {true, false};
+            for (boolean negated : states) {
+                Optional<Expression> expression = variable.getExpression(negated);
+                if (expression.isPresent()) {
+                    for (Variable dependency : expression.get().getDependencies()) {
+                        if (!knownVariables.contains(dependency)) {
+                            throw new UnrecognizedVariableError(dependency, negated, variable);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static class UnrecognizedVariableError extends Exception {
+        private final Variable dependency;
+        private final boolean negated;
+        private final Variable variable;
+        
+        public UnrecognizedVariableError(Variable dependency, boolean negated, Variable variable) {
+            this.dependency = dependency;
+            this.negated = negated;
+            this.variable = variable;
+        }
+
+        @Override
+        public String toString() {
+            final String status = negated ? "!" : "";
+            return String.format("Zmienna %s w zmiennej %s%s nie rozpoznana", dependency, status, variable);
+        }
     }
 }
