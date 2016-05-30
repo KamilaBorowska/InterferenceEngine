@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 
@@ -66,17 +67,25 @@ public class SolverApplication extends Application {
         }
     }
 
-    public static void error(String message) {
-        Alert errorAlert = new Alert(AlertType.ERROR, message);
-        errorAlert.setTitle("Błąd");
-        errorAlert.setHeaderText("Błąd");
-        // Stupid hacks needed for this to work
-        ObservableList<Node> children = errorAlert.getDialogPane().getChildren();
+    // This method is dumb, asdf
+    // It does look into labels in a message box, and allows automatically
+    // resizing them.
+    private static void fixStupidJavaErrorBoxes(Dialog dialog) {
+        ObservableList<Node> children = dialog.getDialogPane().getChildren();
         for (Node node : children) {
             if (node instanceof Label) {
                 ((Label) node).setMinHeight(Region.USE_PREF_SIZE);
             }
         }
+    }
+
+    public static void error(String message) {
+        Alert errorAlert = new Alert(AlertType.ERROR, message);
+        errorAlert.setTitle("Błąd");
+        errorAlert.setHeaderText("Błąd");
+        // Stupid hacks needed for this to work
+        // Like, seriously
+        fixStupidJavaErrorBoxes(errorAlert);
         errorAlert.showAndWait();
     }
 
