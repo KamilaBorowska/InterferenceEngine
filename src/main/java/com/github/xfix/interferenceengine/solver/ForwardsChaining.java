@@ -16,8 +16,10 @@
  */
 package com.github.xfix.interferenceengine.solver;
 
+import com.github.xfix.interferenceengine.expression.Expression;
 import com.github.xfix.interferenceengine.expression.Variable;
 import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -25,9 +27,24 @@ import java.util.List;
  */
 public class ForwardsChaining implements Solver {
 
+    private boolean didSomething = true;
+
     @Override
     public void solve(List<Variable> rules) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        while (didSomething) {
+            didSomething = false;
+            for (Variable rule : rules) {
+                check(rule, true);
+                check(rule, false);
+            }
+        }
     }
-    
+
+    private void check(Variable variable, boolean negated) {
+        Optional<Expression> expression = variable.getExpression(negated);
+        if (!variable.isKnown() && expression.isPresent() && expression.get().getDependencies().isEmpty() && variable.check(negated)) {
+            variable.set(!negated);
+            didSomething = true;
+        }
+    }
 }

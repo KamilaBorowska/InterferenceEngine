@@ -91,7 +91,9 @@ public class SolverApplication extends Application {
     }
 
     private ArrayList<Variable> getRules() {
-        return RuleParser.parseRules(table.getRules());
+        ArrayList<Variable> rules = RuleParser.parseRules(table.getRules());
+        Variable.clearNamed();
+        return rules;
     }
 
     private void solve(Solver solver) {

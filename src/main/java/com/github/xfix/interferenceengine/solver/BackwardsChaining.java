@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import com.github.xfix.interferenceengine.expression.Expression;
 import com.github.xfix.interferenceengine.expression.Variable;
+import java.util.ArrayList;
 
 /**
  *
@@ -27,24 +28,57 @@ import com.github.xfix.interferenceengine.expression.Variable;
  */
 public class BackwardsChaining implements Solver {
 
-    private boolean didSomething = true;
-
     @Override
-    public void solve(List<Variable> rules) {
-        while (didSomething) {
-            didSomething = false;
-            for (Variable rule : rules) {
-                check(rule, true);
-                check(rule, false);
+    public void solve(List<Variable> rulesList) {
+        ArrayList<Variable> rules = new ArrayList<>(rulesList);
+        for (Variable variable : rules) {
+            if (variable.isKnown()) {
+                continue;
+            }
+            boolean[] statuses = {false, true};
+            for (boolean status : statuses) {
+                Optional<Expression> expression = variable.getExpression(status);
+                if (expression.isPresent()) {
+                    ArrayList<Variable> dependencies = expression.get().getDependencies();
+                    try {
+                        bruteforce(variable, dependencies, 0, status);
+                    } catch (CannotProveException e) {
+                        // Oh well.
+                    }
+                    variable.setChecked(false);
+                }
             }
         }
     }
 
-    private void check(Variable variable, boolean negated) {
-        Optional<Expression> expression = variable.getExpression(negated);
-        if (!variable.isKnown() && expression.isPresent() && expression.get().getDependencies().isEmpty() && variable.check(negated)) {
-            variable.set(!negated);
-            didSomething = true;
+    private void bruteforce(Variable variable, ArrayList<Variable> dependencies,
+            int currentDependency, boolean negative) throws CannotProveException {
+        if (currentDependency == dependencies.size()) {
+            boolean result = variable.check(negative);
+            if (variable.isChecked() && variable.getValue() != result) {
+                variable.setKnown(false);
+                throw new CannotProveException();
+            } else if (result) {
+                variable.set(!negative);
+            }
+            variable.setChecked(true);
+            return;
+        }
+        Variable dependency = dependencies.get(currentDependency);
+        // If it's known, let's not bruteforce then.
+        if (dependency.isKnown()) {
+            bruteforce(variable, dependencies, currentDependency + 1, negative);
+        } else {
+            boolean[] statuses = {false, true};
+            for (boolean status : statuses) {
+                dependency.setValue(status);
+                bruteforce(variable, dependencies, currentDependency + 1, negative);
+            }
+        }
+    }
+
+    private static class CannotProveException extends Exception {
+        public CannotProveException() {
         }
     }
 }

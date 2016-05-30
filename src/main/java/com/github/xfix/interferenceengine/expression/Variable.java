@@ -17,8 +17,8 @@
 package com.github.xfix.interferenceengine.expression;
 
 import java.util.Optional;
-import java.util.WeakHashMap;
 import com.github.xfix.interferenceengine.tokenizer.tokens.VariableToken;
+import java.util.HashMap;
 
 /**
  *
@@ -30,8 +30,9 @@ public class Variable implements Action {
     private Optional<Expression> negativeExpression = Optional.empty();
     private boolean known = false;
     private boolean value;
+    private boolean checked = false;
     
-    private static final WeakHashMap<VariableToken, Variable> variables = new WeakHashMap<>();
+    private static final HashMap<VariableToken, Variable> variables = new HashMap<>();
     
     private Variable(VariableToken name) {
         this.name = name;
@@ -50,6 +51,10 @@ public class Variable implements Action {
         variable = new Variable(name);
         variables.put(name, variable);
         return variable;
+    }
+    
+    public static void clearNamed() {
+        variables.clear();
     }
 
     private void setPositiveExpression(Expression expression) {
@@ -108,6 +113,14 @@ public class Variable implements Action {
 
     public void setValue(boolean value) {
         this.value = value;
+    }
+
+    public boolean isChecked() {
+        return checked;
+    }
+    
+    public void setChecked(boolean checked) {
+        this.checked = checked;
     }
 
     public boolean check(boolean negated) {
